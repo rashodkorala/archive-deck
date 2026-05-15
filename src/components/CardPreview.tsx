@@ -1,12 +1,53 @@
 import { motion } from 'motion/react'
-import { CARD_ASPECT_RATIO, CARD_HEIGHT_PX, CARD_WIDTH_PX } from '../lib/cardSpec'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
+import { CARD_ASPECT_RATIO, CARD_HEIGHT_PX, CARD_WIDTH_PX } from '../lib/cardSpec'
+
+export type CornerIndices = {
+  cornerRank: string
+  cornerSuit: string
+  isRed: boolean
+}
 
 type CardPreviewProps = {
   frontUrl: string | null
   backUrl: string | null
   showBack: boolean
   onToggleFace: () => void
+  /** When set and `showCornerIndices`, draws rank/suit in corners on the face side */
+  cornerIndices: CornerIndices | null
+  showCornerIndices: boolean
+  /** Shown under the flip control, e.g. full card name */
+  cardTitle?: string | null
+}
+
+function CornerOverlay({ c }: { c: CornerIndices }) {
+  const color = c.isRed ? 'text-[#b42318]' : 'text-ink'
+  return (
+    <>
+      <div
+        className={`pointer-events-none absolute left-0 top-0 z-10 flex flex-col items-start p-[7%] font-display leading-none ${color}`}
+        aria-hidden
+      >
+        <span className="text-[clamp(0.95rem,4.2vw,1.35rem)] font-semibold tracking-tight">
+          {c.cornerRank}
+        </span>
+        <span className="mt-0.5 text-[clamp(1rem,4.8vw,1.5rem)] font-medium">
+          {c.cornerSuit}
+        </span>
+      </div>
+      <div
+        className={`pointer-events-none absolute bottom-0 right-0 z-10 flex rotate-180 flex-col items-start p-[7%] font-display leading-none ${color}`}
+        aria-hidden
+      >
+        <span className="text-[clamp(0.95rem,4.2vw,1.35rem)] font-semibold tracking-tight">
+          {c.cornerRank}
+        </span>
+        <span className="mt-0.5 text-[clamp(1rem,4.8vw,1.5rem)] font-medium">
+          {c.cornerSuit}
+        </span>
+      </div>
+    </>
+  )
 }
 
 export function CardPreview({
@@ -14,6 +55,9 @@ export function CardPreview({
   backUrl,
   showBack,
   onToggleFace,
+  cornerIndices,
+  showCornerIndices,
+  cardTitle,
 }: CardPreviewProps) {
   const reduced = usePrefersReducedMotion()
   const duration = reduced ? 0 : 0.48
@@ -23,6 +67,9 @@ export function CardPreview({
       : showBack && !backUrl
         ? 'Upload a deck back to preview this side.'
         : null
+
+  const showCorners =
+    Boolean(cornerIndices) && showCornerIndices && !showBack
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -58,6 +105,9 @@ export function CardPreview({
                 Face artwork
               </div>
             )}
+            {showCorners && cornerIndices ? (
+              <CornerOverlay c={cornerIndices} />
+            ) : null}
           </div>
 
           <div
@@ -83,7 +133,12 @@ export function CardPreview({
         </motion.div>
       </div>
 
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex max-w-[min(72vw,320px)] flex-col items-center gap-2">
+        {cardTitle ? (
+          <p className="text-center font-display text-lg font-semibold tracking-tight text-surface">
+            {cardTitle}
+          </p>
+        ) : null}
         <button
           type="button"
           onClick={onToggleFace}

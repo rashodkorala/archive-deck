@@ -1,4 +1,7 @@
-export type Card = {
+import type { StandardCardMeta } from './standardDeck'
+
+export type Card = StandardCardMeta & {
+  /** Stable id; matches `slug` for standard cards */
   id: string
   /** `URL.createObjectURL` for front artwork */
   frontObjectUrl: string | null

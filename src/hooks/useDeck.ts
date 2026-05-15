@@ -1,22 +1,23 @@
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from 'react'
+import { getStandardDeckMeta } from '../lib/standardDeck'
 import type { Card, DeckState } from '../lib/types'
 
-function newCard(): Card {
-  return {
-    id: crypto.randomUUID(),
+function createStandardCards(): Card[] {
+  return getStandardDeckMeta().map((meta) => ({
+    ...meta,
+    id: meta.slug,
     frontObjectUrl: null,
     frontFileName: null,
-  }
+  }))
 }
 
 const initialState: DeckState = {
-  cards: [newCard()],
+  cards: createStandardCards(),
   deckBackObjectUrl: null,
   deckBackFileName: null,
   selectedCardId: null,
 }
 
-// After first card exists, select it
 function withDefaultSelection(state: DeckState): DeckState {
   if (state.cards.length === 0) {
     return { ...state, selectedCardId: null }
@@ -31,8 +32,6 @@ function withDefaultSelection(state: DeckState): DeckState {
 }
 
 type Action =
-  | { type: 'ADD_CARD' }
-  | { type: 'REMOVE_CARD'; id: string }
   | { type: 'MOVE_CARD'; id: string; direction: 'up' | 'down' }
   | { type: 'SELECT_CARD'; id: string }
   | { type: 'SET_CARD_FRONT'; id: string; file: File }
@@ -46,26 +45,6 @@ function revoke(url: string | null) {
 
 function reducer(state: DeckState, action: Action): DeckState {
   switch (action.type) {
-    case 'ADD_CARD': {
-      const card = newCard()
-      return withDefaultSelection({
-        ...state,
-        cards: [...state.cards, card],
-        selectedCardId: card.id,
-      })
-    }
-    case 'REMOVE_CARD': {
-      const card = state.cards.find((c) => c.id === action.id)
-      if (card) {
-        revoke(card.frontObjectUrl)
-      }
-      const cards = state.cards.filter((c) => c.id !== action.id)
-      const next =
-        cards.length === 0
-          ? { ...state, cards: [newCard()], selectedCardId: null as string | null }
-          : { ...state, cards }
-      return withDefaultSelection(next)
-    }
     case 'MOVE_CARD': {
       const idx = state.cards.findIndex((c) => c.id === action.id)
       if (idx < 0) return state
@@ -139,11 +118,6 @@ export function useDeck() {
     }
   }, [])
 
-  const addCard = useCallback(() => dispatch({ type: 'ADD_CARD' }), [])
-  const removeCard = useCallback(
-    (id: string) => dispatch({ type: 'REMOVE_CARD', id }),
-    [],
-  )
   const moveCard = useCallback(
     (id: string, direction: 'up' | 'down') =>
       dispatch({ type: 'MOVE_CARD', id, direction }),
@@ -176,8 +150,6 @@ export function useDeck() {
   return {
     state,
     selectedCard,
-    addCard,
-    removeCard,
     moveCard,
     selectCard,
     setCardFront,

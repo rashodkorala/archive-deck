@@ -1,6 +1,6 @@
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import JSZip from 'jszip'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useDeck } from '../hooks/useDeck'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { CARD_HEIGHT_PX, CARD_WIDTH_PX } from '../lib/cardSpec'
@@ -15,8 +15,6 @@ export function DeckBuilder() {
   const {
     state,
     selectedCard,
-    addCard,
-    removeCard,
     moveCard,
     selectCard,
     setCardFront,
@@ -26,13 +24,9 @@ export function DeckBuilder() {
   } = useDeck()
 
   const [showBack, setShowBack] = useState(false)
+  const [showCornerIndices, setShowCornerIndices] = useState(true)
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState<string | null>(null)
-
-  const selectedIndex = useMemo(() => {
-    if (!selectedCard) return -1
-    return state.cards.findIndex((c) => c.id === selectedCard.id)
-  }, [selectedCard, state.cards])
 
   const showMessage = useCallback((msg: string) => {
     setBanner(msg)
@@ -47,15 +41,14 @@ export function DeckBuilder() {
     setBusy(true)
     try {
       const blob = await renderFaceToPngBlob(selectedCard.frontObjectUrl)
-      const name = `card-${String(selectedIndex + 1).padStart(2, '0')}-face.png`
-      downloadBlob(blob, name)
+      downloadBlob(blob, `${selectedCard.exportStem}-face.png`)
       showMessage('Face exported as PNG.')
     } catch {
       showMessage('Export failed — try another image format.')
     } finally {
       setBusy(false)
     }
-  }, [selectedCard, selectedIndex, showMessage])
+  }, [selectedCard, showMessage])
 
   const exportBack = useCallback(async () => {
     if (!state.deckBackObjectUrl) {
@@ -85,12 +78,10 @@ export function DeckBuilder() {
       const zip = new JSZip()
       const folder = zip.folder('faces')
       if (!folder) throw new Error('zip folder')
-      let i = 0
       for (const c of state.cards) {
-        i += 1
         if (!c.frontObjectUrl) continue
         const blob = await renderFaceToPngBlob(c.frontObjectUrl)
-        folder.file(`card-${String(i).padStart(2, '0')}.png`, blob)
+        folder.file(`${c.exportStem}.png`, blob)
       }
       const out = await zip.generateAsync({ type: 'blob' })
       downloadBlob(out, 'deck-faces.zip')
@@ -115,8 +106,10 @@ export function DeckBuilder() {
             Card sheet
           </h1>
           <p className="mt-2 max-w-md text-[14px] text-ink-muted">
-            Compose a poker deck locally. Faces are per card; the back is shared
-            across the deck — then export print-ready PNGs.
+            Full <strong className="font-medium text-surface/90">54-card</strong> set
+            (52 suits + 2 jokers): each slot has rank and suit labels; upload artwork
+            per face. One shared back — export print-ready PNGs or a ZIP of every
+            face.
           </p>
         </div>
         <p className="text-[12px] text-ink-muted sm:text-right">
@@ -142,14 +135,36 @@ export function DeckBuilder() {
 
       <div className="grid flex-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.1fr)]">
         <section className="flex flex-col items-center lg:items-start">
-          <p className="mb-6 font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-ink-muted">
-            Preview
-          </p>
+          <div className="mb-6 flex w-full max-w-[min(72vw,320px)] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-ink-muted">
+              Preview
+            </p>
+            <label className="flex cursor-pointer items-center gap-2 text-[12px] text-ink-muted">
+              <input
+                type="checkbox"
+                className="size-3.5 rounded border-line-strong text-accent focus:ring-accent"
+                checked={showCornerIndices}
+                onChange={(e) => setShowCornerIndices(e.target.checked)}
+              />
+              Corner labels
+            </label>
+          </div>
           <CardPreview
             frontUrl={selectedCard?.frontObjectUrl ?? null}
             backUrl={state.deckBackObjectUrl}
             showBack={showBack}
             onToggleFace={() => setShowBack((v) => !v)}
+            cornerIndices={
+              selectedCard
+                ? {
+                    cornerRank: selectedCard.cornerRank,
+                    cornerSuit: selectedCard.cornerSuit,
+                    isRed: selectedCard.isRed,
+                  }
+                : null
+            }
+            showCornerIndices={showCornerIndices}
+            cardTitle={selectedCard?.fullName ?? null}
           />
         </section>
 
@@ -161,16 +176,9 @@ export function DeckBuilder() {
                   Deck
                 </h2>
                 <p className="mt-1 text-[13px] text-ink-muted">
-                  {state.cards.length} sheet{state.cards.length === 1 ? '' : 's'}
+                  {state.cards.length} cards · reorder for your export order
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={addCard}
-                className="shrink-0 rounded-full bg-accent px-4 py-2 text-[12px] font-semibold tracking-wide text-white hover:bg-accent-hover"
-              >
-                Add sheet
-              </button>
             </div>
 
             <LayoutGroup id="deck-list">
@@ -200,21 +208,24 @@ export function DeckBuilder() {
                           onClick={() => selectCard(card.id)}
                           className="flex min-w-0 flex-1 items-center gap-3 text-left"
                         >
-                          <span className="font-display w-10 shrink-0 text-center text-[13px] font-semibold tabular-nums text-ink-muted">
+                          <span className="font-display w-11 shrink-0 text-center text-[12px] font-semibold tabular-nums text-ink-muted">
                             {String(index + 1).padStart(2, '0')}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[14px] font-medium text-ink">
-                              {card.frontFileName ?? 'Untitled face'}
+                            <span className="block truncate font-display text-[17px] font-semibold tracking-tight text-ink">
+                              {card.shortLabel}
                             </span>
-                            <span className="block text-[12px] text-ink-muted">
+                            <span className="block truncate text-[12px] text-ink-muted">
+                              {card.fullName}
+                            </span>
+                            <span className="block truncate text-[11px] text-ink-muted/90">
                               {card.frontObjectUrl
-                                ? 'Ready to export'
-                                : 'Awaiting artwork'}
+                                ? (card.frontFileName ?? 'Image attached')
+                                : 'Awaiting face artwork'}
                             </span>
                           </span>
                         </button>
-                        <div className="flex shrink-0 gap-1" role="group" aria-label="Sheet actions">
+                        <div className="flex shrink-0 gap-1" role="group" aria-label="Card order">
                           <button
                             type="button"
                             className="rounded-md border border-line bg-white/60 px-2 py-1 text-[11px] font-medium text-ink hover:bg-white disabled:opacity-30"
@@ -231,13 +242,6 @@ export function DeckBuilder() {
                           >
                             Down
                           </button>
-                          <button
-                            type="button"
-                            className="rounded-md px-2 py-1 text-[11px] font-medium text-ink-muted hover:text-ink"
-                            onClick={() => removeCard(card.id)}
-                          >
-                            Remove
-                          </button>
                         </div>
                       </div>
                     </motion.li>
@@ -252,8 +256,17 @@ export function DeckBuilder() {
               <h3 className="font-display text-xl font-semibold tracking-tight text-ink">
                 Face
               </h3>
+              {selectedCard ? (
+                <p className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
+                  {selectedCard.shortLabel}
+                  <span className="ml-2 text-[13px] font-sans font-normal text-ink-muted">
+                    {selectedCard.exportStem}.png in ZIP
+                  </span>
+                </p>
+              ) : null}
               <p className="mt-1 text-[13px] text-ink-muted">
-                Artwork for the selected sheet — fills the poker face at export.
+                Artwork for the selected card — fills the poker face at export. Corner
+                labels are preview-only unless you bake them into the image.
               </p>
               <div className="mt-5">
                 {selectedCard ? (
