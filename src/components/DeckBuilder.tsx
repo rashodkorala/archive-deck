@@ -40,7 +40,15 @@ export function DeckBuilder() {
     }
     setBusy(true)
     try {
-      const blob = await renderFaceToPngBlob(selectedCard.frontObjectUrl)
+      const blob = await renderFaceToPngBlob({
+        imageSrc: selectedCard.frontObjectUrl,
+        corners: {
+          cornerRank: selectedCard.cornerRank,
+          cornerSuit: selectedCard.cornerSuit,
+          isRed: selectedCard.isRed,
+        },
+        showCornerInlays: showCornerIndices,
+      })
       downloadBlob(blob, `${selectedCard.exportStem}-face.png`)
       showMessage('Face exported as PNG.')
     } catch {
@@ -48,7 +56,7 @@ export function DeckBuilder() {
     } finally {
       setBusy(false)
     }
-  }, [selectedCard, showMessage])
+  }, [selectedCard, showCornerIndices, showMessage])
 
   const exportBack = useCallback(async () => {
     if (!state.deckBackObjectUrl) {
@@ -57,7 +65,11 @@ export function DeckBuilder() {
     }
     setBusy(true)
     try {
-      const blob = await renderFaceToPngBlob(state.deckBackObjectUrl)
+      const blob = await renderFaceToPngBlob({
+        imageSrc: state.deckBackObjectUrl,
+        corners: null,
+        showCornerInlays: false,
+      })
       downloadBlob(blob, 'deck-back.png')
       showMessage('Deck back exported as PNG.')
     } catch {
@@ -80,7 +92,15 @@ export function DeckBuilder() {
       if (!folder) throw new Error('zip folder')
       for (const c of state.cards) {
         if (!c.frontObjectUrl) continue
-        const blob = await renderFaceToPngBlob(c.frontObjectUrl)
+        const blob = await renderFaceToPngBlob({
+          imageSrc: c.frontObjectUrl,
+          corners: {
+            cornerRank: c.cornerRank,
+            cornerSuit: c.cornerSuit,
+            isRed: c.isRed,
+          },
+          showCornerInlays: showCornerIndices,
+        })
         folder.file(`${c.exportStem}.png`, blob)
       }
       const out = await zip.generateAsync({ type: 'blob' })
@@ -91,7 +111,7 @@ export function DeckBuilder() {
     } finally {
       setBusy(false)
     }
-  }, [state.cards, showMessage])
+  }, [state.cards, showCornerIndices, showMessage])
 
   const listStagger = reduced ? 0 : 0.06
 
@@ -146,7 +166,7 @@ export function DeckBuilder() {
                 checked={showCornerIndices}
                 onChange={(e) => setShowCornerIndices(e.target.checked)}
               />
-              Corner labels
+              Corner indices & inlays
             </label>
           </div>
           <CardPreview
@@ -265,8 +285,9 @@ export function DeckBuilder() {
                 </p>
               ) : null}
               <p className="mt-1 text-[13px] text-ink-muted">
-                Artwork for the selected card — fills the poker face at export. Corner
-                labels are preview-only unless you bake them into the image.
+                Artwork sits inside the cream border; rank and suit sit in the corner
+                inlays when enabled. PNG export matches the preview (including the
+                frame).
               </p>
               <div className="mt-5">
                 {selectedCard ? (
@@ -311,7 +332,7 @@ export function DeckBuilder() {
               Export
             </p>
             <p className="mt-1 text-[12px] text-ink-muted">
-              PNG · {CARD_WIDTH_PX} × {CARD_HEIGHT_PX}px · rounded corners
+              PNG · {CARD_WIDTH_PX} × {CARD_HEIGHT_PX}px · cream border + keyline
             </p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <button

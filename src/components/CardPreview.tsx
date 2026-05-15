@@ -1,52 +1,107 @@
+import type { CSSProperties } from 'react'
 import { motion } from 'motion/react'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { CARD_ASPECT_RATIO, CARD_HEIGHT_PX, CARD_WIDTH_PX } from '../lib/cardSpec'
+import { CARD_CREAM, CARD_KEYLINE } from '../lib/cardVintageFrame'
+import type { CornerIndices } from '../lib/cornerIndices'
 
-export type CornerIndices = {
-  cornerRank: string
-  cornerSuit: string
-  isRed: boolean
-}
+export type { CornerIndices }
 
 type CardPreviewProps = {
   frontUrl: string | null
   backUrl: string | null
   showBack: boolean
   onToggleFace: () => void
-  /** When set and `showCornerIndices`, draws rank/suit in corners on the face side */
   cornerIndices: CornerIndices | null
   showCornerIndices: boolean
-  /** Shown under the flip control, e.g. full card name */
   cardTitle?: string | null
 }
 
-function CornerOverlay({ c }: { c: CornerIndices }) {
-  const color = c.isRed ? 'text-[#b42318]' : 'text-ink'
+function VintageFrame({
+  children,
+  cornerIndices,
+  showCornerIndices,
+}: {
+  children: React.ReactNode
+  cornerIndices: CornerIndices | null
+  showCornerIndices: boolean
+}) {
+  const ink = cornerIndices?.isRed ? '#b42318' : CARD_KEYLINE
+  const showInlays = Boolean(cornerIndices) && showCornerIndices
+
   return (
-    <>
+    <div
+      className="h-full w-full shadow-[var(--shadow-card)]"
+      style={{
+        backgroundColor: CARD_CREAM,
+        borderRadius: '4.6%',
+        padding: '6.4%',
+      }}
+    >
       <div
-        className={`pointer-events-none absolute left-0 top-0 z-10 flex flex-col items-start p-[7%] font-display leading-none ${color}`}
-        aria-hidden
+        className="relative h-full w-full overflow-hidden bg-neutral-900/5"
+        style={{
+          borderRadius: '3.1%',
+          boxShadow: `inset 0 0 0 2px ${CARD_KEYLINE}`,
+        }}
       >
-        <span className="text-[clamp(0.95rem,4.2vw,1.35rem)] font-semibold tracking-tight">
-          {c.cornerRank}
-        </span>
-        <span className="mt-0.5 text-[clamp(1rem,4.8vw,1.5rem)] font-medium">
-          {c.cornerSuit}
-        </span>
+        {children}
+        {showInlays && cornerIndices ? (
+          <>
+            <div
+              className="pointer-events-none absolute left-0 top-0 z-10 flex w-[15%] min-w-[2.5rem] flex-col items-start justify-start gap-0.5 border-b-2 border-r-2 pb-[5%] pl-[10%] pr-[6%] pt-[6%] font-sans leading-none"
+              style={
+                {
+                  height: '22%',
+                  backgroundColor: CARD_CREAM,
+                  borderColor: CARD_KEYLINE,
+                  borderBottomRightRadius: 'clamp(0.75rem, 5.5vw, 2.75rem)',
+                } as CSSProperties
+              }
+              aria-hidden
+            >
+              <span
+                className="text-[length:clamp(0.65rem,3.8vw,1rem)] font-bold tracking-tight"
+                style={{ color: ink }}
+              >
+                {cornerIndices.cornerRank}
+              </span>
+              <span
+                className="text-[length:clamp(0.75rem,4.4vw,1.15rem)] font-semibold"
+                style={{ color: ink }}
+              >
+                {cornerIndices.cornerSuit}
+              </span>
+            </div>
+            <div
+              className="pointer-events-none absolute bottom-0 right-0 z-10 flex w-[15%] min-w-[2.5rem] rotate-180 flex-col items-start justify-start gap-0.5 border-b-2 border-r-2 pb-[5%] pl-[10%] pr-[6%] pt-[6%] font-sans leading-none"
+              style={
+                {
+                  height: '22%',
+                  backgroundColor: CARD_CREAM,
+                  borderColor: CARD_KEYLINE,
+                  borderBottomRightRadius: 'clamp(0.75rem, 5.5vw, 2.75rem)',
+                } as CSSProperties
+              }
+              aria-hidden
+            >
+              <span
+                className="text-[length:clamp(0.65rem,3.8vw,1rem)] font-bold tracking-tight"
+                style={{ color: ink }}
+              >
+                {cornerIndices.cornerRank}
+              </span>
+              <span
+                className="text-[length:clamp(0.75rem,4.4vw,1.15rem)] font-semibold"
+                style={{ color: ink }}
+              >
+                {cornerIndices.cornerSuit}
+              </span>
+            </div>
+          </>
+        ) : null}
       </div>
-      <div
-        className={`pointer-events-none absolute bottom-0 right-0 z-10 flex rotate-180 flex-col items-start p-[7%] font-display leading-none ${color}`}
-        aria-hidden
-      >
-        <span className="text-[clamp(0.95rem,4.2vw,1.35rem)] font-semibold tracking-tight">
-          {c.cornerRank}
-        </span>
-        <span className="mt-0.5 text-[clamp(1rem,4.8vw,1.5rem)] font-medium">
-          {c.cornerSuit}
-        </span>
-      </div>
-    </>
+    </div>
   )
 }
 
@@ -68,9 +123,6 @@ export function CardPreview({
         ? 'Upload a deck back to preview this side.'
         : null
 
-  const showCorners =
-    Boolean(cornerIndices) && showCornerIndices && !showBack
-
   return (
     <div className="flex flex-col items-center gap-5">
       <div
@@ -87,48 +139,54 @@ export function CardPreview({
           transition={{ duration, ease: [0.22, 1, 0.36, 1] }}
         >
           <div
-            className="absolute inset-0 overflow-hidden rounded-2xl bg-surface shadow-[var(--shadow-card)] ring-1 ring-black/5"
+            className="absolute inset-0 overflow-hidden shadow-[var(--shadow-card)] ring-1 ring-black/10"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
               transform: 'translateZ(0.1px) rotateY(0deg)',
+              borderRadius: '4.8%',
             }}
           >
-            {frontUrl ? (
-              <img
-                src={frontUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-b from-surface to-surface-raised px-6 text-center text-[13px] text-ink-muted">
-                Face artwork
-              </div>
-            )}
-            {showCorners && cornerIndices ? (
-              <CornerOverlay c={cornerIndices} />
-            ) : null}
+            <VintageFrame
+              cornerIndices={cornerIndices}
+              showCornerIndices={showCornerIndices && !showBack}
+            >
+              {frontUrl ? (
+                <img
+                  src={frontUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full min-h-[120px] w-full items-center justify-center bg-gradient-to-b from-[#e8dfd4] to-[#ddd2c6] px-4 text-center text-[12px] text-neutral-600">
+                  Face artwork
+                </div>
+              )}
+            </VintageFrame>
           </div>
 
           <div
-            className="absolute inset-0 overflow-hidden rounded-2xl bg-void shadow-[var(--shadow-card)] ring-1 ring-white/10"
+            className="absolute inset-0 overflow-hidden shadow-[var(--shadow-card)] ring-1 ring-white/10"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
               transform: 'translateZ(0.1px) rotateY(180deg)',
+              borderRadius: '4.8%',
             }}
           >
-            {backUrl ? (
-              <img
-                src={backUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-b from-void to-ink px-6 text-center text-[13px] text-surface/75">
-                Deck back
-              </div>
-            )}
+            <VintageFrame cornerIndices={null} showCornerIndices={false}>
+              {backUrl ? (
+                <img
+                  src={backUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full min-h-[120px] w-full items-center justify-center bg-gradient-to-b from-void to-ink px-4 text-center text-[12px] text-surface/75">
+                  Deck back
+                </div>
+              )}
+            </VintageFrame>
           </div>
         </motion.div>
       </div>
@@ -152,7 +210,8 @@ export function CardPreview({
           </p>
         ) : (
           <p className="text-center text-[11px] uppercase tracking-[0.18em] text-ink-muted">
-            Poker · 2.5 × 3.5 in · {CARD_WIDTH_PX} × {CARD_HEIGHT_PX}px export
+            Poker · 2.5 × 3.5 in · {CARD_WIDTH_PX} × {CARD_HEIGHT_PX}px export · vintage
+            border
           </p>
         )}
       </div>

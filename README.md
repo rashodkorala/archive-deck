@@ -20,7 +20,7 @@ pnpm lint
 - **Export deck back** — saves the shared back as `deck-back.png` using the same pipeline.
 - **Download all faces (ZIP)** — builds `deck-faces.zip` with files under `faces/` named `{exportStem}.png` (e.g. `faces/clubs-king.png`) for every card that has a front image. Cards without artwork are skipped.
 
-Corner labels are **preview-only**; exported PNGs are your artwork only unless you bake indices into the image file.
+Exports are **750 × 1050 px** PNGs with a **vintage cream outer border**, inner **keyline** around your artwork, and optional **corner inlays** (rank + suit in bold sans, red for hearts/diamonds) matching classic playing cards. Toggle **Corner indices & inlays** to include or omit the corner blocks on export as well as in the preview. The deck **back** uses the same cream frame without indices.
 
 Exports use the Canvas 2D API (`toBlob`), not DOM screenshots.
 

@@ -3,6 +3,11 @@ import {
   CARD_HEIGHT_PX,
   CARD_WIDTH_PX,
 } from './cardSpec'
+import {
+  drawVintageCardFace,
+  layoutVintageFrame,
+} from './cardVintageFrame'
+import type { CornerIndices } from './cornerIndices'
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -13,52 +18,33 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
-function drawImageCover(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  dx: number,
-  dy: number,
-  dw: number,
-  dh: number,
-): void {
-  const ir = img.naturalWidth / img.naturalHeight
-  const cr = dw / dh
-  let sx = 0
-  let sy = 0
-  let sw = img.naturalWidth
-  let sh = img.naturalHeight
-  if (ir > cr) {
-    sw = sh * cr
-    sx = (img.naturalWidth - sw) / 2
-  } else {
-    sh = sw / cr
-    sy = (img.naturalHeight - sh) / 2
+export type RenderFacePngOptions = {
+  imageSrc: string
+  corners?: CornerIndices | null
+  /** Match preview: when false, cream border + art only (no corner inlays / indices) */
+  showCornerInlays?: boolean
+}
+
+async function ensureCanvasFonts(layout: ReturnType<typeof layoutVintageFrame>) {
+  if (typeof document === 'undefined' || !document.fonts?.load) return
+  try {
+    await document.fonts.ready
+    const spec = `${layout.rankFont}px "DM Sans"`
+    await document.fonts.load(`700 ${spec}`)
+    await document.fonts.load(`600 ${spec}`)
+  } catch {
+    /* system fallback */
   }
-  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
 }
 
-function roundRectClip(
-  ctx: CanvasRenderingContext2D,
-  w: number,
-  h: number,
-  r: number,
-): void {
-  const rr = Math.min(r, w / 2, h / 2)
-  ctx.beginPath()
-  ctx.moveTo(rr, 0)
-  ctx.lineTo(w - rr, 0)
-  ctx.quadraticCurveTo(w, 0, w, rr)
-  ctx.lineTo(w, h - rr)
-  ctx.quadraticCurveTo(w, h, w - rr, h)
-  ctx.lineTo(rr, h)
-  ctx.quadraticCurveTo(0, h, 0, h - rr)
-  ctx.lineTo(0, rr)
-  ctx.quadraticCurveTo(0, 0, rr, 0)
-  ctx.closePath()
-  ctx.clip()
-}
+export async function renderFaceToPngBlob(
+  options: RenderFacePngOptions | string,
+): Promise<Blob> {
+  const imageSrc = typeof options === 'string' ? options : options.imageSrc
+  const corners = typeof options === 'string' ? null : (options.corners ?? null)
+  const showCornerInlays =
+    typeof options === 'string' ? true : (options.showCornerInlays ?? true)
 
-export async function renderFaceToPngBlob(imageSrc: string): Promise<Blob> {
   const img = await loadImage(imageSrc)
   const canvas = document.createElement('canvas')
   canvas.width = CARD_WIDTH_PX
@@ -66,10 +52,17 @@ export async function renderFaceToPngBlob(imageSrc: string): Promise<Blob> {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas unsupported')
 
-  ctx.save()
-  roundRectClip(ctx, CARD_WIDTH_PX, CARD_HEIGHT_PX, CARD_CORNER_RADIUS_PX)
-  drawImageCover(ctx, img, 0, 0, CARD_WIDTH_PX, CARD_HEIGHT_PX)
-  ctx.restore()
+  const layout = layoutVintageFrame(
+    CARD_WIDTH_PX,
+    CARD_HEIGHT_PX,
+    CARD_CORNER_RADIUS_PX,
+  )
+  await ensureCanvasFonts(layout)
+
+  drawVintageCardFace(ctx, CARD_WIDTH_PX, CARD_HEIGHT_PX, img, layout, {
+    corners,
+    showCornerInlays: showCornerInlays && Boolean(corners),
+  })
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
