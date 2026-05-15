@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from 'react'
 import { getStandardDeckMeta } from '../lib/standardDeck'
+import { normalizeRotationDeg, type RotationDeg } from '../lib/imageRotation'
 import { sortCardsBySuitOrder } from '../lib/sortCardsBySuit'
 import type { Card, DeckState } from '../lib/types'
 
@@ -9,6 +10,7 @@ function createStandardCards(): Card[] {
     id: meta.slug,
     frontObjectUrl: null,
     frontFileName: null,
+    frontRotationDeg: 0 as RotationDeg,
   }))
 }
 
@@ -16,6 +18,7 @@ const initialState: DeckState = {
   cards: createStandardCards(),
   deckBackObjectUrl: null,
   deckBackFileName: null,
+  deckBackRotationDeg: 0 as RotationDeg,
   selectedCardId: null,
 }
 
@@ -37,6 +40,8 @@ type Action =
   | { type: 'RESET_DECK_ORDER' }
   | { type: 'SELECT_CARD'; id: string }
   | { type: 'SET_CARD_FRONT'; id: string; file: File }
+  | { type: 'SET_CARD_ROTATION'; id: string; delta: 90 | -90 }
+  | { type: 'SET_DECK_BACK_ROTATION'; delta: 90 | -90 }
   | { type: 'SET_DECK_BACK'; file: File }
   | { type: 'CLEAR_CARD_FRONT'; id: string }
   | { type: 'CLEAR_DECK_BACK' }
@@ -71,6 +76,7 @@ function reducer(state: DeckState, action: Action): DeckState {
           ...c,
           frontObjectUrl,
           frontFileName: action.file.name,
+          frontRotationDeg: 0 as RotationDeg,
         }
       })
       return { ...state, cards }
@@ -81,15 +87,39 @@ function reducer(state: DeckState, action: Action): DeckState {
         ...state,
         deckBackObjectUrl: URL.createObjectURL(action.file),
         deckBackFileName: action.file.name,
+        deckBackRotationDeg: 0 as RotationDeg,
       }
     }
     case 'CLEAR_CARD_FRONT': {
       const cards = state.cards.map((c) => {
         if (c.id !== action.id) return c
         revoke(c.frontObjectUrl)
-        return { ...c, frontObjectUrl: null, frontFileName: null }
+        return {
+          ...c,
+          frontObjectUrl: null,
+          frontFileName: null,
+          frontRotationDeg: 0 as RotationDeg,
+        }
       })
       return { ...state, cards }
+    }
+    case 'SET_CARD_ROTATION': {
+      const cards = state.cards.map((c) => {
+        if (c.id !== action.id) return c
+        return {
+          ...c,
+          frontRotationDeg: normalizeRotationDeg(c.frontRotationDeg + action.delta),
+        }
+      })
+      return { ...state, cards }
+    }
+    case 'SET_DECK_BACK_ROTATION': {
+      return {
+        ...state,
+        deckBackRotationDeg: normalizeRotationDeg(
+          state.deckBackRotationDeg + action.delta,
+        ),
+      }
     }
     case 'CLEAR_DECK_BACK': {
       revoke(state.deckBackObjectUrl)
@@ -97,6 +127,7 @@ function reducer(state: DeckState, action: Action): DeckState {
         ...state,
         deckBackObjectUrl: null,
         deckBackFileName: null,
+        deckBackRotationDeg: 0 as RotationDeg,
       }
     }
     default:
@@ -153,6 +184,16 @@ export function useDeck() {
     [],
   )
 
+  const rotateCardFront = useCallback(
+    (id: string, delta: 90 | -90) =>
+      dispatch({ type: 'SET_CARD_ROTATION', id, delta }),
+    [],
+  )
+  const rotateDeckBack = useCallback(
+    (delta: 90 | -90) => dispatch({ type: 'SET_DECK_BACK_ROTATION', delta }),
+    [],
+  )
+
   const selectedCard =
     state.cards.find((c) => c.id === state.selectedCardId) ?? state.cards[0] ?? null
 
@@ -166,5 +207,7 @@ export function useDeck() {
     setDeckBack,
     clearCardFront,
     clearDeckBack,
+    rotateCardFront,
+    rotateDeckBack,
   }
 }

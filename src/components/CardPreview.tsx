@@ -4,8 +4,36 @@ import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { CARD_ASPECT_RATIO, CARD_HEIGHT_PX, CARD_WIDTH_PX } from '../lib/cardSpec'
 import { CARD_CREAM, CARD_KEYLINE } from '../lib/cardVintageFrame'
 import type { CornerIndices } from '../lib/cornerIndices'
+import { normalizeRotationDeg, type RotationDeg } from '../lib/imageRotation'
 
 export type { CornerIndices }
+
+function RotatedFillImage({
+  src,
+  rotationDeg,
+}: {
+  src: string
+  rotationDeg: RotationDeg
+}) {
+  const d = normalizeRotationDeg(rotationDeg)
+  const sideways = d === 90 || d === 270
+  return (
+    <div className="relative h-full w-full overflow-hidden">
+      <img
+        src={src}
+        alt=""
+        className="pointer-events-none absolute left-1/2 top-1/2 max-h-none max-w-none -translate-x-1/2 -translate-y-1/2 object-cover"
+        style={
+          {
+            transform: `translate(-50%, -50%) rotate(${d}deg)`,
+            width: sideways ? '148%' : '100%',
+            height: sideways ? '148%' : '100%',
+          } as CSSProperties
+        }
+      />
+    </div>
+  )
+}
 
 type CardPreviewProps = {
   frontUrl: string | null
@@ -15,6 +43,8 @@ type CardPreviewProps = {
   cornerIndices: CornerIndices | null
   showCornerIndices: boolean
   cardTitle?: string | null
+  frontRotationDeg: RotationDeg
+  backRotationDeg: RotationDeg
 }
 
 function VintageFrame({
@@ -118,6 +148,8 @@ export function CardPreview({
   cornerIndices,
   showCornerIndices,
   cardTitle,
+  frontRotationDeg,
+  backRotationDeg,
 }: CardPreviewProps) {
   const reduced = usePrefersReducedMotion()
   const duration = reduced ? 0 : 0.48
@@ -157,11 +189,7 @@ export function CardPreview({
               showCornerIndices={showCornerIndices && !showBack}
             >
               {frontUrl ? (
-                <img
-                  src={frontUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+                <RotatedFillImage src={frontUrl} rotationDeg={frontRotationDeg} />
               ) : (
                 <div className="flex h-full min-h-[120px] w-full items-center justify-center bg-gradient-to-b from-[#e8dfd4] to-[#ddd2c6] px-4 text-center text-[12px] text-neutral-600">
                   Face artwork
@@ -181,11 +209,7 @@ export function CardPreview({
           >
             <VintageFrame cornerIndices={null} showCornerIndices={false}>
               {backUrl ? (
-                <img
-                  src={backUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+                <RotatedFillImage src={backUrl} rotationDeg={backRotationDeg} />
               ) : (
                 <div className="flex h-full min-h-[120px] w-full items-center justify-center bg-gradient-to-b from-void to-ink px-4 text-center text-[12px] text-surface/75">
                   Deck back

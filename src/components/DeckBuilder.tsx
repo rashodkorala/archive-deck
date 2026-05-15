@@ -69,6 +69,8 @@ export function DeckBuilder() {
     setDeckBack,
     clearCardFront,
     clearDeckBack,
+    rotateCardFront,
+    rotateDeckBack,
   } = useDeck()
 
   const [showBack, setShowBack] = useState(false)
@@ -115,6 +117,7 @@ export function DeckBuilder() {
         imageSrc: selectedCard.frontObjectUrl,
         corners: cornerIndicesFromCard(selectedCard),
         showCornerInlays: showCornerIndices,
+        imageRotationDeg: selectedCard.frontRotationDeg,
       })
       downloadBlob(blob, `${selectedCard.exportStem}-face.png`)
       showMessage('Face exported as PNG.')
@@ -136,6 +139,7 @@ export function DeckBuilder() {
         imageSrc: state.deckBackObjectUrl,
         corners: null,
         showCornerInlays: false,
+        imageRotationDeg: state.deckBackRotationDeg,
       })
       downloadBlob(blob, 'deck-back.png')
       showMessage('Deck back exported as PNG.')
@@ -144,7 +148,7 @@ export function DeckBuilder() {
     } finally {
       setBusy(false)
     }
-  }, [state.deckBackObjectUrl, showMessage])
+  }, [state.deckBackObjectUrl, state.deckBackRotationDeg, showMessage])
 
   const exportAllFaces = useCallback(async () => {
     const withFaces = state.cards.filter((c) => c.frontObjectUrl)
@@ -163,6 +167,7 @@ export function DeckBuilder() {
           imageSrc: c.frontObjectUrl,
           corners: cornerIndicesFromCard(c),
           showCornerInlays: showCornerIndices,
+          imageRotationDeg: c.frontRotationDeg,
         })
         folder.file(`${c.exportStem}.png`, blob)
       }
@@ -242,6 +247,8 @@ export function DeckBuilder() {
             }
             showCornerIndices={showCornerIndices}
             cardTitle={selectedCard?.fullName ?? null}
+            frontRotationDeg={selectedCard?.frontRotationDeg ?? 0}
+            backRotationDeg={state.deckBackRotationDeg}
           />
         </section>
 
@@ -383,20 +390,42 @@ export function DeckBuilder() {
               ) : null}
               <p className="mt-1 text-[13px] text-ink-muted">
                 Artwork sits inside the cream border; rank and suit sit in the corner
-                inlays when enabled. PNG export matches the preview (including the
-                frame).
+                inlays when enabled. Use rotate to fit landscape photos. PNG export
+                matches the preview (including the frame).
               </p>
               <div className="mt-5">
                 {selectedCard ? (
-                  <UploadField
-                    label="Front image"
-                    hint={`${CARD_WIDTH_PX} × ${CARD_HEIGHT_PX} target`}
-                    previewUrl={selectedCard.frontObjectUrl}
-                    fileName={selectedCard.frontFileName}
-                    onFile={(file) => setCardFront(selectedCard.id, file)}
-                    onClear={() => clearCardFront(selectedCard.id)}
-                    disabled={busy}
-                  />
+                  <>
+                    <UploadField
+                      label="Front image"
+                      hint={`${CARD_WIDTH_PX} × ${CARD_HEIGHT_PX} target`}
+                      previewUrl={selectedCard.frontObjectUrl}
+                      fileName={selectedCard.frontFileName}
+                      onFile={(file) => setCardFront(selectedCard.id, file)}
+                      onClear={() => clearCardFront(selectedCard.id)}
+                      disabled={busy}
+                    />
+                    {selectedCard.frontObjectUrl ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => rotateCardFront(selectedCard.id, -90)}
+                          className="rounded-lg border border-line-strong bg-white/70 px-3 py-2 text-[12px] font-semibold text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                        >
+                          Rotate −90°
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => rotateCardFront(selectedCard.id, 90)}
+                          className="rounded-lg border border-line-strong bg-white/70 px-3 py-2 text-[12px] font-semibold text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                        >
+                          Rotate +90°
+                        </button>
+                      </div>
+                    ) : null}
+                  </>
                 ) : null}
               </div>
             </div>
@@ -408,7 +437,8 @@ export function DeckBuilder() {
                 Back
               </h3>
               <p className="mt-1 text-[13px] text-ink-muted">
-                One back for the whole deck — mirrored on every sheet.
+                One back for the whole deck — mirrored on every sheet. Rotate to fit
+                landscape artwork.
               </p>
               <div className="mt-5">
                 <UploadField
@@ -420,6 +450,26 @@ export function DeckBuilder() {
                   onClear={clearDeckBack}
                   disabled={busy}
                 />
+                {state.deckBackObjectUrl ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => rotateDeckBack(-90)}
+                      className="rounded-lg border border-line-strong bg-white/70 px-3 py-2 text-[12px] font-semibold text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                    >
+                      Rotate −90°
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => rotateDeckBack(90)}
+                      className="rounded-lg border border-line-strong bg-white/70 px-3 py-2 text-[12px] font-semibold text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                    >
+                      Rotate +90°
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

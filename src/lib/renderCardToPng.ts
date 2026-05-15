@@ -8,6 +8,7 @@ import {
   layoutVintageFrame,
 } from './cardVintageFrame'
 import type { CornerIndices } from './cornerIndices'
+import type { RotationDeg } from './imageRotation'
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -23,6 +24,8 @@ export type RenderFacePngOptions = {
   corners?: CornerIndices | null
   /** Match preview: when false, cream border + art only (no corner inlays / indices) */
   showCornerInlays?: boolean
+  /** Clockwise; applied before cover-fit */
+  imageRotationDeg?: RotationDeg
 }
 
 async function ensureCanvasFonts(layout: ReturnType<typeof layoutVintageFrame>) {
@@ -44,6 +47,8 @@ export async function renderFaceToPngBlob(
   const corners = typeof options === 'string' ? null : (options.corners ?? null)
   const showCornerInlays =
     typeof options === 'string' ? true : (options.showCornerInlays ?? true)
+  const imageRotationDeg =
+    typeof options === 'string' ? 0 : (options.imageRotationDeg ?? 0)
 
   const img = await loadImage(imageSrc)
   const canvas = document.createElement('canvas')
@@ -62,6 +67,7 @@ export async function renderFaceToPngBlob(
   drawVintageCardFace(ctx, CARD_WIDTH_PX, CARD_HEIGHT_PX, img, layout, {
     corners,
     showCornerInlays: showCornerInlays && Boolean(corners),
+    imageRotationDeg,
   })
 
   return new Promise((resolve, reject) => {

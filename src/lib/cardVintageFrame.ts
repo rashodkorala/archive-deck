@@ -1,4 +1,6 @@
 import type { CornerIndices } from './cornerIndices'
+import { createRotatedBitmap } from './imageRotation'
+import type { RotationDeg } from './imageRotation'
 
 /** Warm cream border like classic printed playing cards */
 export const CARD_CREAM = '#f1e9df'
@@ -126,24 +128,33 @@ function pathBottomRightInlay(
 
 function drawImageCover(
   ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
+  img: CanvasImageSource,
   dx: number,
   dy: number,
   dw: number,
   dh: number,
 ): void {
-  const ir = img.naturalWidth / img.naturalHeight
+  const nw =
+    img instanceof HTMLImageElement
+      ? img.naturalWidth
+      : (img as HTMLCanvasElement).width
+  const nh =
+    img instanceof HTMLImageElement
+      ? img.naturalHeight
+      : (img as HTMLCanvasElement).height
+  if (nw === 0 || nh === 0) return
+  const ir = nw / nh
   const cr = dw / dh
   let sx = 0
   let sy = 0
-  let sw = img.naturalWidth
-  let sh = img.naturalHeight
+  let sw = nw
+  let sh = nh
   if (ir > cr) {
     sw = sh * cr
-    sx = (img.naturalWidth - sw) / 2
+    sx = (nw - sw) / 2
   } else {
     sh = sw / cr
-    sy = (img.naturalHeight - sh) / 2
+    sy = (nh - sh) / 2
   }
   ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
 }
@@ -152,6 +163,8 @@ export type DrawVintageFaceOptions = {
   corners: CornerIndices | null
   /** When false, only cream ring + inner art + keyline (no corner inlays / text) */
   showCornerInlays: boolean
+  /** Clockwise; applied before cover-fit */
+  imageRotationDeg?: RotationDeg
 }
 
 /**
@@ -181,7 +194,9 @@ export function drawVintageCardFace(
   ctx.save()
   pathInnerRoundRect(ctx, ix, iy, iw, ih, innerR)
   ctx.clip()
-  drawImageCover(ctx, img, ix, iy, iw, ih)
+  const rot = opts.imageRotationDeg ?? 0
+  const painted = createRotatedBitmap(img, rot)
+  drawImageCover(ctx, painted, ix, iy, iw, ih)
   ctx.restore()
 
   ctx.save()
