@@ -7,9 +7,55 @@ import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { CARD_HEIGHT_PX, CARD_WIDTH_PX } from '../lib/cardSpec'
 import { downloadBlob } from '../lib/download'
 import { renderFaceToPngBlob } from '../lib/renderCardToPng'
+import { cornerIndicesFromCard } from '../lib/suitColors'
+import type { Card } from '../lib/types'
 import { AppShell } from './AppShell'
 import { CardPreview } from './CardPreview'
 import { UploadField } from './UploadField'
+
+function ColoredShortLabel({ card, large }: { card: Card; large?: boolean }) {
+  const c = cornerIndicesFromCard(card)
+  const size = large
+    ? 'text-2xl sm:text-[1.65rem]'
+    : 'text-[17px]'
+  if (card.kind === 'joker') {
+    return (
+      <span
+        className={`inline font-display font-semibold tracking-tight ${size}`}
+        style={{ color: c.suitColor }}
+      >
+        {card.shortLabel}
+      </span>
+    )
+  }
+  return (
+    <span className={`inline font-display font-semibold tracking-tight ${size}`}>
+      <span style={{ color: c.rankColor }}>{card.cornerRank}</span>
+      <span style={{ color: c.suitColor }}>{card.cornerSuit}</span>
+    </span>
+  )
+}
+
+function ColoredFullName({ card }: { card: Card }) {
+  if (card.kind === 'joker') {
+    return (
+      <span className="block truncate text-[12px] text-ink-muted">{card.fullName}</span>
+    )
+  }
+  const parts = card.fullName.split(' of ')
+  const c = cornerIndicesFromCard(card)
+  if (parts.length !== 2) {
+    return <span className="block truncate text-[12px] text-ink-muted">{card.fullName}</span>
+  }
+  return (
+    <span className="block truncate text-[12px]">
+      <span className="text-ink-muted">{parts[0]} of </span>
+      <span className="font-medium" style={{ color: c.suitColor }}>
+        {parts[1]}
+      </span>
+    </span>
+  )
+}
 
 export function DeckBuilder() {
   const reduced = usePrefersReducedMotion()
@@ -67,11 +113,7 @@ export function DeckBuilder() {
     try {
       const blob = await renderFaceToPngBlob({
         imageSrc: selectedCard.frontObjectUrl,
-        corners: {
-          cornerRank: selectedCard.cornerRank,
-          cornerSuit: selectedCard.cornerSuit,
-          isRed: selectedCard.isRed,
-        },
+        corners: cornerIndicesFromCard(selectedCard),
         showCornerInlays: showCornerIndices,
       })
       downloadBlob(blob, `${selectedCard.exportStem}-face.png`)
@@ -119,11 +161,7 @@ export function DeckBuilder() {
         if (!c.frontObjectUrl) continue
         const blob = await renderFaceToPngBlob({
           imageSrc: c.frontObjectUrl,
-          corners: {
-            cornerRank: c.cornerRank,
-            cornerSuit: c.cornerSuit,
-            isRed: c.isRed,
-          },
+          corners: cornerIndicesFromCard(c),
           showCornerInlays: showCornerIndices,
         })
         folder.file(`${c.exportStem}.png`, blob)
@@ -200,13 +238,7 @@ export function DeckBuilder() {
             showBack={showBack}
             onToggleFace={() => setShowBack((v) => !v)}
             cornerIndices={
-              selectedCard
-                ? {
-                    cornerRank: selectedCard.cornerRank,
-                    cornerSuit: selectedCard.cornerSuit,
-                    isRed: selectedCard.isRed,
-                  }
-                : null
+              selectedCard ? cornerIndicesFromCard(selectedCard) : null
             }
             showCornerIndices={showCornerIndices}
             cardTitle={selectedCard?.fullName ?? null}
@@ -293,20 +325,18 @@ export function DeckBuilder() {
                             <span className="font-display w-11 shrink-0 text-center text-[12px] font-semibold tabular-nums text-ink-muted">
                               {String(exportIndex + 1).padStart(2, '0')}
                             </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate font-display text-[17px] font-semibold tracking-tight text-ink">
-                              {card.shortLabel}
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate">
+                                <ColoredShortLabel card={card} />
+                              </span>
+                              <ColoredFullName card={card} />
+                              <span className="block truncate text-[11px] text-ink-muted/90">
+                                {card.frontObjectUrl
+                                  ? (card.frontFileName ?? 'Image attached')
+                                  : 'Awaiting face artwork'}
+                              </span>
                             </span>
-                            <span className="block truncate text-[12px] text-ink-muted">
-                              {card.fullName}
-                            </span>
-                            <span className="block truncate text-[11px] text-ink-muted/90">
-                              {card.frontObjectUrl
-                                ? (card.frontFileName ?? 'Image attached')
-                                : 'Awaiting face artwork'}
-                            </span>
-                          </span>
-                        </button>
+                          </button>
                           <div
                             className="flex shrink-0 gap-1"
                             role="group"
@@ -344,9 +374,9 @@ export function DeckBuilder() {
                 Face
               </h3>
               {selectedCard ? (
-                <p className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink">
-                  {selectedCard.shortLabel}
-                  <span className="ml-2 text-[13px] font-sans font-normal text-ink-muted">
+                <p className="mt-2 flex flex-wrap items-baseline gap-x-2">
+                  <ColoredShortLabel card={selectedCard} large />
+                  <span className="text-[13px] font-sans font-normal text-ink-muted">
                     {selectedCard.exportStem}.png in ZIP
                   </span>
                 </p>

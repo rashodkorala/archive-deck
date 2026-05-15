@@ -26,7 +26,6 @@ function VintageFrame({
   cornerIndices: CornerIndices | null
   showCornerIndices: boolean
 }) {
-  const ink = cornerIndices?.isRed ? '#b42318' : CARD_KEYLINE
   const showInlays = Boolean(cornerIndices) && showCornerIndices
 
   return (
@@ -64,13 +63,13 @@ function VintageFrame({
               <div className="flex h-full w-full flex-col items-center justify-center gap-[0.16em] px-[6%] py-[8%]">
                 <span
                   className="text-[1em] font-bold tracking-tight"
-                  style={{ color: ink }}
+                  style={{ color: cornerIndices.rankColor }}
                 >
                   {cornerIndices.cornerRank}
                 </span>
                 <span
                   className="text-[1.32em] font-semibold leading-none"
-                  style={{ color: ink }}
+                  style={{ color: cornerIndices.suitColor }}
                 >
                   {cornerIndices.cornerSuit}
                 </span>
@@ -92,13 +91,13 @@ function VintageFrame({
               <div className="flex h-full w-full rotate-180 flex-col items-center justify-center gap-[0.16em] px-[6%] py-[8%]">
                 <span
                   className="text-[1em] font-bold tracking-tight"
-                  style={{ color: ink }}
+                  style={{ color: cornerIndices.rankColor }}
                 >
                   {cornerIndices.cornerRank}
                 </span>
                 <span
                   className="text-[1.32em] font-semibold leading-none"
-                  style={{ color: ink }}
+                  style={{ color: cornerIndices.suitColor }}
                 >
                   {cornerIndices.cornerSuit}
                 </span>

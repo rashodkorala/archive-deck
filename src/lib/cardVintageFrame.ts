@@ -193,7 +193,6 @@ export function drawVintageCardFace(
 
   if (opts.showCornerInlays && opts.corners) {
     const c = opts.corners
-    const ink = c.isRed ? '#b42318' : CARD_KEYLINE
 
     ctx.fillStyle = CARD_CREAM
     ctx.save()
@@ -217,14 +216,14 @@ export function drawVintageCardFace(
 
     const tlCx = ix + inlayW / 2
     const tlCy = iy + inlayH / 2
-    drawCenteredRankSuit(ctx, tlCx, tlCy, c, rankFont, suitFont, fontStack, ink)
+    drawCenteredRankSuit(ctx, tlCx, tlCy, c, rankFont, suitFont, fontStack)
 
     const brCx = ix + iw - inlayW / 2
     const brCy = iy + ih - inlayH / 2
     ctx.save()
     ctx.translate(brCx, brCy)
     ctx.rotate(Math.PI)
-    drawCenteredRankSuit(ctx, 0, 0, c, rankFont, suitFont, fontStack, ink)
+    drawCenteredRankSuit(ctx, 0, 0, c, rankFont, suitFont, fontStack)
     ctx.restore()
   }
 }
@@ -233,16 +232,14 @@ function drawCenteredRankSuit(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
-  c: { cornerRank: string; cornerSuit: string },
+  c: CornerIndices,
   rankFont: number,
   suitFont: number,
   fontStack: string,
-  ink: string,
 ): void {
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'alphabetic'
-  ctx.fillStyle = ink
   const gap = rankFont * 0.16
 
   ctx.font = `700 ${rankFont}px ${fontStack}`
@@ -259,10 +256,12 @@ function drawCenteredRankSuit(
   let y = cy - totalH / 2 + ascentR
 
   ctx.font = `700 ${rankFont}px ${fontStack}`
+  ctx.fillStyle = c.rankColor
   ctx.fillText(c.cornerRank, cx, y)
   y += descentR + gap + ascentS
 
   ctx.font = `600 ${suitFont}px ${fontStack}`
+  ctx.fillStyle = c.suitColor
   ctx.fillText(c.cornerSuit, cx, y)
   ctx.restore()
 }
