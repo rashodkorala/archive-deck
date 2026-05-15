@@ -39,7 +39,7 @@ function VintageFrame({
       }}
     >
       <div
-        className="relative h-full w-full overflow-hidden bg-neutral-900/5"
+        className="relative h-full w-full overflow-hidden bg-neutral-900/5 [container-type:inline-size]"
         style={{
           borderRadius: '3.1%',
           boxShadow: `inset 0 0 0 2px ${CARD_KEYLINE}`,
@@ -49,54 +49,60 @@ function VintageFrame({
         {showInlays && cornerIndices ? (
           <>
             <div
-              className="pointer-events-none absolute left-0 top-0 z-10 flex w-[17%] min-w-[3rem] flex-col items-center justify-center gap-1 border-b-2 border-r-2 px-[6%] py-[8%] font-sans leading-none"
+              className="pointer-events-none absolute left-0 top-0 z-10 w-[17%] min-w-0 border-b-2 border-r-2 font-sans leading-none"
               style={
                 {
                   height: '24%',
                   backgroundColor: CARD_CREAM,
                   borderColor: CARD_KEYLINE,
-                  borderBottomRightRadius: 'clamp(0.85rem, 6vw, 3rem)',
+                  borderBottomRightRadius: 'clamp(0.75rem, 5.5cqw, 3rem)',
+                  fontSize: 'clamp(0.65rem, 8.5cqw, 2rem)',
                 } as CSSProperties
               }
               aria-hidden
             >
-              <span
-                className="text-[length:clamp(1.15rem,9vw,2.35rem)] font-bold tracking-tight"
-                style={{ color: ink }}
-              >
-                {cornerIndices.cornerRank}
-              </span>
-              <span
-                className="text-[length:clamp(1.35rem,11vw,2.85rem)] font-semibold leading-none"
-                style={{ color: ink }}
-              >
-                {cornerIndices.cornerSuit}
-              </span>
+              <div className="flex h-full w-full flex-col items-center justify-center gap-[0.16em] px-[6%] py-[8%]">
+                <span
+                  className="text-[1em] font-bold tracking-tight"
+                  style={{ color: ink }}
+                >
+                  {cornerIndices.cornerRank}
+                </span>
+                <span
+                  className="text-[1.32em] font-semibold leading-none"
+                  style={{ color: ink }}
+                >
+                  {cornerIndices.cornerSuit}
+                </span>
+              </div>
             </div>
             <div
-              className="pointer-events-none absolute bottom-0 right-0 z-10 flex w-[17%] min-w-[3rem] rotate-180 flex-col items-center justify-center gap-1 border-b-2 border-r-2 px-[6%] py-[8%] font-sans leading-none"
+              className="pointer-events-none absolute bottom-0 right-0 z-10 w-[17%] min-w-0 border-l-2 border-t-2 font-sans leading-none"
               style={
                 {
                   height: '24%',
                   backgroundColor: CARD_CREAM,
                   borderColor: CARD_KEYLINE,
-                  borderBottomRightRadius: 'clamp(0.85rem, 6vw, 3rem)',
+                  borderTopLeftRadius: 'clamp(0.75rem, 5.5cqw, 3rem)',
+                  fontSize: 'clamp(0.65rem, 8.5cqw, 2rem)',
                 } as CSSProperties
               }
               aria-hidden
             >
-              <span
-                className="text-[length:clamp(1.15rem,9vw,2.35rem)] font-bold tracking-tight"
-                style={{ color: ink }}
-              >
-                {cornerIndices.cornerRank}
-              </span>
-              <span
-                className="text-[length:clamp(1.35rem,11vw,2.85rem)] font-semibold leading-none"
-                style={{ color: ink }}
-              >
-                {cornerIndices.cornerSuit}
-              </span>
+              <div className="flex h-full w-full rotate-180 flex-col items-center justify-center gap-[0.16em] px-[6%] py-[8%]">
+                <span
+                  className="text-[1em] font-bold tracking-tight"
+                  style={{ color: ink }}
+                >
+                  {cornerIndices.cornerRank}
+                </span>
+                <span
+                  className="text-[1.32em] font-semibold leading-none"
+                  style={{ color: ink }}
+                >
+                  {cornerIndices.cornerSuit}
+                </span>
+              </div>
             </div>
           </>
         ) : null}
