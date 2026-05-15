@@ -49,50 +49,50 @@ function VintageFrame({
         {showInlays && cornerIndices ? (
           <>
             <div
-              className="pointer-events-none absolute left-0 top-0 z-10 flex w-[15%] min-w-[2.5rem] flex-col items-start justify-start gap-0.5 border-b-2 border-r-2 pb-[5%] pl-[10%] pr-[6%] pt-[6%] font-sans leading-none"
+              className="pointer-events-none absolute left-0 top-0 z-10 flex w-[17%] min-w-[3rem] flex-col items-center justify-center gap-1 border-b-2 border-r-2 px-[6%] py-[8%] font-sans leading-none"
               style={
                 {
-                  height: '22%',
+                  height: '24%',
                   backgroundColor: CARD_CREAM,
                   borderColor: CARD_KEYLINE,
-                  borderBottomRightRadius: 'clamp(0.75rem, 5.5vw, 2.75rem)',
+                  borderBottomRightRadius: 'clamp(0.85rem, 6vw, 3rem)',
                 } as CSSProperties
               }
               aria-hidden
             >
               <span
-                className="text-[length:clamp(0.65rem,3.8vw,1rem)] font-bold tracking-tight"
+                className="text-[length:clamp(1.15rem,9vw,2.35rem)] font-bold tracking-tight"
                 style={{ color: ink }}
               >
                 {cornerIndices.cornerRank}
               </span>
               <span
-                className="text-[length:clamp(0.75rem,4.4vw,1.15rem)] font-semibold"
+                className="text-[length:clamp(1.35rem,11vw,2.85rem)] font-semibold leading-none"
                 style={{ color: ink }}
               >
                 {cornerIndices.cornerSuit}
               </span>
             </div>
             <div
-              className="pointer-events-none absolute bottom-0 right-0 z-10 flex w-[15%] min-w-[2.5rem] rotate-180 flex-col items-start justify-start gap-0.5 border-b-2 border-r-2 pb-[5%] pl-[10%] pr-[6%] pt-[6%] font-sans leading-none"
+              className="pointer-events-none absolute bottom-0 right-0 z-10 flex w-[17%] min-w-[3rem] rotate-180 flex-col items-center justify-center gap-1 border-b-2 border-r-2 px-[6%] py-[8%] font-sans leading-none"
               style={
                 {
-                  height: '22%',
+                  height: '24%',
                   backgroundColor: CARD_CREAM,
                   borderColor: CARD_KEYLINE,
-                  borderBottomRightRadius: 'clamp(0.75rem, 5.5vw, 2.75rem)',
+                  borderBottomRightRadius: 'clamp(0.85rem, 6vw, 3rem)',
                 } as CSSProperties
               }
               aria-hidden
             >
               <span
-                className="text-[length:clamp(0.65rem,3.8vw,1rem)] font-bold tracking-tight"
+                className="text-[length:clamp(1.15rem,9vw,2.35rem)] font-bold tracking-tight"
                 style={{ color: ink }}
               >
                 {cornerIndices.cornerRank}
               </span>
               <span
-                className="text-[length:clamp(0.75rem,4.4vw,1.15rem)] font-semibold"
+                className="text-[length:clamp(1.35rem,11vw,2.85rem)] font-semibold leading-none"
                 style={{ color: ink }}
               >
                 {cornerIndices.cornerSuit}

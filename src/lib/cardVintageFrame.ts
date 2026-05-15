@@ -14,7 +14,6 @@ export type VintageFrameLayout = {
   keyline: number
   rankFont: number
   suitFont: number
-  textPad: number
 }
 
 export function layoutVintageFrame(
@@ -23,13 +22,12 @@ export function layoutVintageFrame(
   outerCornerR: number,
 ): VintageFrameLayout {
   const pad = Math.round(Math.min(cardW, cardH) * 0.064)
-  const inlayW = Math.round(cardW * 0.15)
-  const inlayH = Math.round(cardH * 0.15)
+  const inlayW = Math.round(cardW * 0.17)
+  const inlayH = Math.round(cardH * 0.17)
   const inlayCornerR = Math.min(48, Math.round(Math.min(inlayW, inlayH) * 0.32))
   const innerR = Math.max(10, outerCornerR - pad * 0.35)
-  const rankFont = Math.round(Math.min(cardW, cardH) * 0.048)
-  const suitFont = Math.round(rankFont * 1.12)
-  const textPad = Math.round(pad * 0.55)
+  const rankFont = Math.round(Math.min(cardW, cardH) * 0.09)
+  const suitFont = Math.round(rankFont * 1.32)
   return {
     outerR: outerCornerR,
     pad,
@@ -40,7 +38,6 @@ export function layoutVintageFrame(
     keyline: Math.max(1.5, Math.round(cardW / 420)),
     rankFont,
     suitFont,
-    textPad,
   }
 }
 
@@ -168,7 +165,7 @@ export function drawVintageCardFace(
   layout: VintageFrameLayout,
   opts: DrawVintageFaceOptions,
 ): void {
-  const { pad, innerR, inlayW, inlayH, inlayCornerR, keyline, rankFont, suitFont, textPad } =
+  const { pad, innerR, inlayW, inlayH, inlayCornerR, keyline, rankFont, suitFont } =
     layout
 
   ctx.save()
@@ -218,24 +215,54 @@ export function drawVintageCardFace(
     const fontStack =
       '"DM Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'
 
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'top'
-    ctx.fillStyle = ink
-    ctx.font = `700 ${rankFont}px ${fontStack}`
-    ctx.fillText(c.cornerRank, ix + textPad, iy + textPad)
-    ctx.font = `600 ${suitFont}px ${fontStack}`
-    ctx.fillText(c.cornerSuit, ix + textPad, iy + textPad + rankFont * 1.05)
+    const tlCx = ix + inlayW / 2
+    const tlCy = iy + inlayH / 2
+    drawCenteredRankSuit(ctx, tlCx, tlCy, c, rankFont, suitFont, fontStack, ink)
 
+    const brCx = ix + iw - inlayW / 2
+    const brCy = iy + ih - inlayH / 2
     ctx.save()
-    ctx.translate(ix + iw, iy + ih)
+    ctx.translate(brCx, brCy)
     ctx.rotate(Math.PI)
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'top'
-    ctx.fillStyle = ink
-    ctx.font = `700 ${rankFont}px ${fontStack}`
-    ctx.fillText(c.cornerRank, textPad, textPad)
-    ctx.font = `600 ${suitFont}px ${fontStack}`
-    ctx.fillText(c.cornerSuit, textPad, textPad + rankFont * 1.05)
+    drawCenteredRankSuit(ctx, 0, 0, c, rankFont, suitFont, fontStack, ink)
     ctx.restore()
   }
+}
+
+function drawCenteredRankSuit(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  c: { cornerRank: string; cornerSuit: string },
+  rankFont: number,
+  suitFont: number,
+  fontStack: string,
+  ink: string,
+): void {
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillStyle = ink
+  const gap = rankFont * 0.16
+
+  ctx.font = `700 ${rankFont}px ${fontStack}`
+  const rm = ctx.measureText(c.cornerRank)
+  const ascentR = rm.actualBoundingBoxAscent ?? rankFont * 0.72
+  const descentR = rm.actualBoundingBoxDescent ?? rankFont * 0.22
+
+  ctx.font = `600 ${suitFont}px ${fontStack}`
+  const sm = ctx.measureText(c.cornerSuit)
+  const ascentS = sm.actualBoundingBoxAscent ?? suitFont * 0.72
+  const descentS = sm.actualBoundingBoxDescent ?? suitFont * 0.22
+
+  const totalH = ascentR + descentR + gap + ascentS + descentS
+  let y = cy - totalH / 2 + ascentR
+
+  ctx.font = `700 ${rankFont}px ${fontStack}`
+  ctx.fillText(c.cornerRank, cx, y)
+  y += descentR + gap + ascentS
+
+  ctx.font = `600 ${suitFont}px ${fontStack}`
+  ctx.fillText(c.cornerSuit, cx, y)
+  ctx.restore()
 }
