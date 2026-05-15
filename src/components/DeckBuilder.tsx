@@ -191,7 +191,7 @@ export function DeckBuilder() {
             Atelier
           </p>
           <h1 className="font-display text-4xl font-semibold tracking-tight text-surface sm:text-5xl">
-            Card sheet
+            Archive deck
           </h1>
           <p className="mt-2 max-w-md text-[14px] text-ink-muted">
             Full <strong className="font-medium text-surface/90">54-card</strong> set

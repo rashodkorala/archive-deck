@@ -1,4 +1,4 @@
-# Card sheet
+# Archive deck
 
 A browser-only editor for a full **54-card** poker-sized deck (2.5 × 3.5 in): **52 suited ranks** (spades, hearts, diamonds, clubs — ace through king in that order) plus **two jokers**. Each slot has a **short label** (e.g. `A♠`, `10♥`), a **full name** (e.g. `Ace of Spades`), and optional **corner rank/suit overlays on the preview** (toggle “Corner labels”). Upload a **face image per card** and one **shared deck back**, then export **print-resolution PNGs** (750 × 1050 px) or a **ZIP** of every face you have filled in.
 
