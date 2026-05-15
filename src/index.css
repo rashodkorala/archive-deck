@@ -1,0 +1,62 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #141210;
+  --color-ink-muted: #5c5854;
+  --color-surface: #f0ebe3;
+  --color-surface-raised: #f7f4ee;
+  --color-line: rgba(20, 18, 16, 0.12);
+  --color-line-strong: rgba(20, 18, 16, 0.22);
+  --color-accent: #8b6914;
+  --color-accent-hover: #6d5210;
+  --color-void: #0c0b0a;
+
+  --shadow-card: 0 28px 80px rgba(12, 11, 10, 0.18),
+    0 12px 28px rgba(12, 11, 10, 0.1);
+  --shadow-panel: 0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 18px 48px rgba(12, 11, 10, 0.08);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    @apply antialiased;
+    color-scheme: light;
+  }
+
+  body {
+    @apply m-0 min-h-svh bg-void text-ink font-sans text-[15px] leading-relaxed;
+  }
+
+  #root {
+    @apply min-h-svh;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-accent) 35%, white);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+}
+
+/* Subtle paper grain */
+.grain::after {
+  content: '';
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  opacity: 0.055;
+  z-index: 50;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
