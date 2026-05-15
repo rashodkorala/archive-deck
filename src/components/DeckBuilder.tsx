@@ -1,7 +1,8 @@
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import JSZip from 'jszip'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useDeck } from '../hooks/useDeck'
+import { compareCardsBySuitOrder } from '../lib/sortCardsBySuit'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { CARD_HEIGHT_PX, CARD_WIDTH_PX } from '../lib/cardSpec'
 import { downloadBlob } from '../lib/download'
@@ -16,6 +17,7 @@ export function DeckBuilder() {
     state,
     selectedCard,
     moveCard,
+    resetDeckOrder,
     selectCard,
     setCardFront,
     setDeckBack,
@@ -27,6 +29,29 @@ export function DeckBuilder() {
   const [showCornerIndices, setShowCornerIndices] = useState(true)
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState<string | null>(null)
+  const [deckSearch, setDeckSearch] = useState('')
+
+  const sortedDisplayCards = useMemo(
+    () => [...state.cards].sort(compareCardsBySuitOrder),
+    [state.cards],
+  )
+
+  const filteredDeckCards = useMemo(() => {
+    const q = deckSearch.trim().toLowerCase()
+    if (!q) return sortedDisplayCards
+    return sortedDisplayCards.filter(
+      (card) =>
+        card.fullName.toLowerCase().includes(q) ||
+        card.shortLabel.toLowerCase().includes(q) ||
+        card.exportStem.toLowerCase().includes(q),
+    )
+  }, [sortedDisplayCards, deckSearch])
+
+  const exportIndexById = useMemo(() => {
+    const m = new Map<string, number>()
+    state.cards.forEach((c, i) => m.set(c.id, i))
+    return m
+  }, [state.cards])
 
   const showMessage = useCallback((msg: string) => {
     setBanner(msg)
@@ -196,41 +221,78 @@ export function DeckBuilder() {
                   Deck
                 </h2>
                 <p className="mt-1 text-[13px] text-ink-muted">
-                  {state.cards.length} cards · reorder for your export order
+                  {state.cards.length} cards · listed by suit · numbers show ZIP export
+                  order
                 </p>
               </div>
             </div>
 
+            <div className="sticky top-0 z-10 -mx-1 mb-3 space-y-2 border-b border-line/80 bg-surface/95 px-1 pb-3 pt-0 backdrop-blur-sm">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <label className="min-w-0 flex-1">
+                  <span className="sr-only">Filter cards</span>
+                  <input
+                    type="search"
+                    value={deckSearch}
+                    onChange={(e) => setDeckSearch(e.target.value)}
+                    placeholder="Search name, label, file stem…"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="w-full rounded-lg border border-line-strong bg-white/80 px-3 py-2 font-sans text-[13px] text-ink placeholder:text-ink-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => resetDeckOrder()}
+                  className="shrink-0 rounded-lg border border-line-strong bg-white/70 px-3 py-2 text-[12px] font-semibold text-ink hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                >
+                  Reset export order
+                </button>
+              </div>
+            </div>
+
             <LayoutGroup id="deck-list">
-              <ul className="flex flex-col gap-1">
-                {state.cards.map((card, index) => {
-                  const selected = card.id === selectedCard?.id
-                  return (
-                    <motion.li
-                      key={card.id}
-                      layout
-                      initial={false}
-                      transition={{
-                        layout: { duration: reduced ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] },
-                      }}
-                      style={{ transitionDelay: `${index * listStagger}s` }}
-                    >
-                      <div
-                        className={[
-                          'flex w-full items-center gap-3 rounded-xl border px-3 py-3 transition-colors',
-                          selected
-                            ? 'border-accent/50 bg-white/80'
-                            : 'border-transparent hover:border-line hover:bg-white/50',
-                        ].join(' ')}
+              <div className="max-h-[min(60vh,520px)] overflow-y-auto scroll-smooth rounded-xl border border-line/70 bg-white/30 pr-0.5 [-webkit-overflow-scrolling:touch]">
+                <ul className="flex flex-col gap-1 p-1">
+                  {filteredDeckCards.length === 0 ? (
+                    <li className="rounded-lg px-3 py-8 text-center text-[13px] text-ink-muted">
+                      No cards match this search.
+                    </li>
+                  ) : null}
+                  {filteredDeckCards.map((card, index) => {
+                    const selected = card.id === selectedCard?.id
+                    const exportIndex = exportIndexById.get(card.id) ?? 0
+                    const atExportTop = exportIndex === 0
+                    const atExportBottom = exportIndex === state.cards.length - 1
+                    return (
+                      <motion.li
+                        key={card.id}
+                        layout
+                        initial={false}
+                        transition={{
+                          layout: {
+                            duration: reduced ? 0 : 0.45,
+                            ease: [0.22, 1, 0.36, 1],
+                          },
+                        }}
+                        style={{ transitionDelay: `${index * listStagger}s` }}
                       >
-                        <button
-                          type="button"
-                          onClick={() => selectCard(card.id)}
-                          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                        <div
+                          className={[
+                            'flex w-full items-center gap-3 rounded-xl border px-3 py-3 transition-colors',
+                            selected
+                              ? 'border-accent/50 bg-white/80'
+                              : 'border-transparent hover:border-line hover:bg-white/50',
+                          ].join(' ')}
                         >
-                          <span className="font-display w-11 shrink-0 text-center text-[12px] font-semibold tabular-nums text-ink-muted">
-                            {String(index + 1).padStart(2, '0')}
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => selectCard(card.id)}
+                            className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-lg"
+                          >
+                            <span className="font-display w-11 shrink-0 text-center text-[12px] font-semibold tabular-nums text-ink-muted">
+                              {String(exportIndex + 1).padStart(2, '0')}
+                            </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-display text-[17px] font-semibold tracking-tight text-ink">
                               {card.shortLabel}
@@ -245,29 +307,34 @@ export function DeckBuilder() {
                             </span>
                           </span>
                         </button>
-                        <div className="flex shrink-0 gap-1" role="group" aria-label="Card order">
-                          <button
-                            type="button"
-                            className="rounded-md border border-line bg-white/60 px-2 py-1 text-[11px] font-medium text-ink hover:bg-white disabled:opacity-30"
-                            disabled={index === 0}
-                            onClick={() => moveCard(card.id, 'up')}
+                          <div
+                            className="flex shrink-0 gap-1"
+                            role="group"
+                            aria-label="Card export order"
                           >
-                            Up
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-md border border-line bg-white/60 px-2 py-1 text-[11px] font-medium text-ink hover:bg-white disabled:opacity-30"
-                            disabled={index === state.cards.length - 1}
-                            onClick={() => moveCard(card.id, 'down')}
-                          >
-                            Down
-                          </button>
+                            <button
+                              type="button"
+                              className="rounded-md border border-line bg-white/60 px-2 py-1 text-[11px] font-medium text-ink hover:bg-white disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                              disabled={atExportTop}
+                              onClick={() => moveCard(card.id, 'up')}
+                            >
+                              Up
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-md border border-line bg-white/60 px-2 py-1 text-[11px] font-medium text-ink hover:bg-white disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                              disabled={atExportBottom}
+                              onClick={() => moveCard(card.id, 'down')}
+                            >
+                              Down
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </motion.li>
-                  )
-                })}
-              </ul>
+                      </motion.li>
+                    )
+                  })}
+                </ul>
+              </div>
             </LayoutGroup>
           </div>
 

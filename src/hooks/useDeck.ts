@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from 'react'
 import { getStandardDeckMeta } from '../lib/standardDeck'
+import { sortCardsBySuitOrder } from '../lib/sortCardsBySuit'
 import type { Card, DeckState } from '../lib/types'
 
 function createStandardCards(): Card[] {
@@ -33,6 +34,7 @@ function withDefaultSelection(state: DeckState): DeckState {
 
 type Action =
   | { type: 'MOVE_CARD'; id: string; direction: 'up' | 'down' }
+  | { type: 'RESET_DECK_ORDER' }
   | { type: 'SELECT_CARD'; id: string }
   | { type: 'SET_CARD_FRONT'; id: string; file: File }
   | { type: 'SET_DECK_BACK'; file: File }
@@ -54,6 +56,9 @@ function reducer(state: DeckState, action: Action): DeckState {
       const cards = [...state.cards]
       ;[cards[idx], cards[swap]] = [cards[swap]!, cards[idx]!]
       return { ...state, cards }
+    }
+    case 'RESET_DECK_ORDER': {
+      return { ...state, cards: sortCardsBySuitOrder(state.cards) }
     }
     case 'SELECT_CARD':
       return { ...state, selectedCardId: action.id }
@@ -123,6 +128,10 @@ export function useDeck() {
       dispatch({ type: 'MOVE_CARD', id, direction }),
     [],
   )
+  const resetDeckOrder = useCallback(
+    () => dispatch({ type: 'RESET_DECK_ORDER' }),
+    [],
+  )
   const selectCard = useCallback(
     (id: string) => dispatch({ type: 'SELECT_CARD', id }),
     [],
@@ -151,6 +160,7 @@ export function useDeck() {
     state,
     selectedCard,
     moveCard,
+    resetDeckOrder,
     selectCard,
     setCardFront,
     setDeckBack,
