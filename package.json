@@ -1,5 +1,6 @@
 {
   "name": "archive-deck",
+  "description": "Archive deck — browser-only 54-card poker deck artwork and PNG export",
   "private": true,
   "version": "0.0.0",
   "type": "module",

@@ -2,7 +2,7 @@ import type { CornerIndices } from './cornerIndices'
 import { createRotatedBitmap } from './imageRotation'
 import type { RotationDeg } from './imageRotation'
 
-/** Warm cream border like classic printed playing cards */
+/** Archive deck — warm cream border and inner frame */
 export const CARD_CREAM = '#f1e9df'
 export const CARD_KEYLINE = '#171312'
 

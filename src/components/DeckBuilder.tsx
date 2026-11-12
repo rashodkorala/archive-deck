@@ -187,9 +187,6 @@ export function DeckBuilder() {
     <AppShell>
       <header className="mb-10 flex flex-col gap-3 border-b border-line pb-8 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-display text-[12px] font-semibold uppercase tracking-[0.28em] text-ink-muted">
-            Atelier
-          </p>
           <h1 className="font-display text-4xl font-semibold tracking-tight text-surface sm:text-5xl">
             Archive deck
           </h1>
